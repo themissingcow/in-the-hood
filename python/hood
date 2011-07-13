@@ -1,0 +1,185 @@
+#!/usr/bin/env python
+import InTheHood
+import os
+from optparse import OptionParser, OptionGroup
+from datetime import timedelta
+
+
+p = OptionParser()
+
+g = OptionGroup( p, 
+	"Actions", 
+	"Only one of these flags will be considered at any time."
+)
+
+g.add_option( "-i", "--checkin",
+	action = "store_true",
+	default = False,
+	dest = "checkin",
+	help = "Check in, either to the default context, of another, if specified."
+)
+
+g.add_option( "-o", "--checkout",
+	action = "store_true",
+	default = False,
+	dest = "checkout",
+	help = "Check out, either from the default context, of another, if specified."
+)
+
+g.add_option( "-x", "--contexts",
+	action = "store_true",
+	default = False,
+	dest = "contexts",
+	help = "Query contexts in the current Hood"
+)
+
+g.add_option( "-s", "--stints",
+	action = "store_true",
+	default = False,
+	dest = "stints",
+	help = "Query stints in the current Hood"
+)
+
+g.add_option( "-w", "--who",
+	action = "store_true",
+	default = False,
+	dest = "who",
+	help = "List people currently doing a stint in the current, or a specified context."
+)
+
+g.add_option( "-j", "--janitor",
+	action = "store_true",
+	default = False,
+	dest = "janitor",
+	help = "Sends a chap around the hood to clean up the folks who have EXPIERD..."
+)
+
+p.add_option_group( g )
+
+o = OptionGroup( p, 
+	"Options", 
+	"These options change how the above commands behave."
+)
+
+o.add_option( "-a", "--all",
+	action = "store_true",
+	default = False,
+	dest = "all",
+	help = "When requesting actions that can be context or user specific, instead consider all entities."
+)
+
+o.add_option( "-c", "--context",
+	action = "append",
+	dest = "context",
+	metavar = "KEY:VALUE",
+	help = "Specify a key:value pair for a context, this flag can appear multiple times to build up a more complex context."
+)
+
+
+o.add_option( "-u", "--user",
+	dest = "user",
+	help = "When another flag may consider a user, use this user instead of the person running the command."
+)
+
+o.add_option( "-t", "--timeout",
+	dest = "timeout",
+	metavar = "MINUTES",
+	help = "When checking in, expire after the specified time in minutes."
+)
+
+p.add_option_group( o )
+
+(options, args) = p.parse_args()
+
+
+h = InTheHood.Hood( os.getenv( "INTHEHOOD_CONFIG_FILE" ) )
+
+user = options.user
+if not user :
+	user = os.getenv( "USER" )
+
+if not user :
+	raise RuntimeError, "Unable to determine the current user, please specify a valid used with the -u option."
+
+if options.context :
+	context = {}
+	for c in options.context :
+		parts = c.split( ":" )
+		if len(parts) != 2 :
+			continue
+		context[ parts[0] ] = parts[1]
+else :
+	context = h.defaultContext()
+
+
+
+def printContext( c ) :
+	
+	print "{\n"
+	for k in c.attribtues :
+		print "\t%s: %s" % ( k, str(c.attribtues[k]) )
+	print "}\n"
+
+def printStint( s ) :
+
+	out = "%s   %12s  @  " % ( s.timestamp, s.user )
+	for k in s.context.attribtues :
+		out += "%s: %s  " % ( k, s.context.attribtues[k] )
+	print out	
+
+
+
+if options.checkin :
+
+	t = timedelta( minutes=options.timeout ) if options.timeout else None
+	h.checkin( user, context, timeout=t )
+	
+elif options.checkout :
+
+	c = context if not options.all else None
+
+	h.checkout( user, context=c )
+
+elif options.contexts :
+
+	u = user if not options.all else None
+	
+	contexts = h.contexts( user=u )
+	for c in contexts :
+		printContext( c )
+
+elif options.stints :
+
+	u = user if not options.all else None
+	c = context if options.context else None
+	
+	stints = h.stints( user=u, context=c )
+	for s in stints :
+		printStint( s )
+
+elif options.who :
+	
+	u = user if options.user else None
+	c = None if options.all else context
+	stints = h.stints( user=u, context=c )
+	for s in stints :
+		printStint( s )
+
+elif options.janitor :
+	
+	h.janitor()
+
+else :
+	
+	p.print_help()
+	
+	
+
+
+
+
+
+
+
+
+
