@@ -1,1 +1,28 @@
-Bide your time, all will become clear...
+This is a little idea that I'm kicking around.
+
+Quite often, you work somewhere, and a bunch of people work on the same thing.
+There might be a load of different groups, working on different things.
+
+Quite often, a 'thing' ( aka a 'Context' ), can be defined by properties of
+the local environment, or some other, manually specified attributes.
+
+If you work on *NIX then these things can be easy to find, and tap into.
+
+InTheHood is a really simply way of seeing who else is working in the same
+Context as you.
+
+Requirements:
+--------------------
+
+- Python 2.3 or later
+- MySQLdb (if you want to use the MySql backend)
+
+Installation:
+--------------------
+
+- copy InTheHood/defaults.py somewhere
+- edit it (generally, for database type fun)
+- setenv $INTHEHOOD_CONFIG_FILE '/where/it/lives.py'
+- add InTheHood to your PYTHONPATH
+- ./python/hood -h
+
