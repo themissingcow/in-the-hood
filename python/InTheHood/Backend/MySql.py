@@ -103,8 +103,12 @@ class MySql :
 	def removeContext( self, context ) :
 	
 		h = context.hash()
-		if h in self.__contexts :
-			del self.__contexts[ h ]
+		self.__cursor.execute( 
+			"""DELETE FROM %s WHERE `id`='%s'""" % (
+				self.contextsTable, 
+				_mysql.escape_string(h) 
+			)
+		)
 
 
 	def contexts( self ) :
